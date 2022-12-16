@@ -114,6 +114,12 @@ task stopApp(type: KillTask) {
     kills startService
 }
 
+task componentTest(type: Test, dependsOn: ['testClasses']) {
+    useJUnitPlatform()
+    include 'component/**'
+}
+
+
 //def nameFile = "avro-example"
 //def tomcatlog = new File(project.getBuildDir(), "tomcat.log")
 //task startApp() {
