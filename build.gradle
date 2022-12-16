@@ -104,13 +104,13 @@ tasks.register("generateSchema", GenerateAvroSchemaTask) {
 
 generateSchema.dependsOn(compileJava)
 
-task startService(type: SpawnTask) {
+task startApp(type: SpawnTask) {
     dependsOn assemble
     command "./gradlew bootRun"
     waitFor "Started Application"
 }
 
-task stopService(type: KillTask) {
+task stopApp(type: KillTask) {
     kills startService
 }
 
