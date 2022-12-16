@@ -1,0 +1,45 @@
+infrastructure:
+  kafka:
+    boostrap-servers: localhost:9092,localhost:9093,localhost:9094
+    schema-registry:
+      url: http://localhost:8081
+      cache-size: 1024
+      subject-name-strategy: Topic
+      key-subject-name-strategy:
+      value-subject-name-strategy:
+    async:
+      poolSize: 10
+      maxPoolSize: 100
+      queueCapacity: 50
+      keepAliceSeconds: 120
+      allowThreadTimeout: true
+    consumer:
+      topic: account
+      max-poll-records: 10
+      enable-auto-commit: false
+      group-id: consumer-g1
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      auto-offset-reset: earliest
+      key-delegate-class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-delegate-class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+      concurrency: 2
+      idle-event-interval: 300000
+    producer:
+      topic: account
+      acks: all
+      key-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+    specific:
+      avro:
+        reader: true
+    security-protocol: PLAINTEXT
+    ssl:
+      enable: false
+      keystore-location:
+      keystore-password:
+      truststore-location:
+      truststore-password:
+

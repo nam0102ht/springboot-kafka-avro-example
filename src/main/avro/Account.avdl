@@ -1,0 +1,45 @@
+@namespace("com.ntnn.avro")
+protocol Accounts {
+	record Metadata {
+		string eventVersion = "1.0";
+
+		string type;
+
+		union { null, string } schemaUrl = null;
+
+		string source;
+
+		string subject;
+
+		string id;
+
+		long time;
+
+		union { null, string } correlationId = null;
+
+		string appId;
+	}
+	record AccountId {
+		string accountId;
+
+		string productName;
+
+		union { null, string } accountType = null;
+
+	}
+
+	record Account {
+		Metadata metadata;
+
+		string accountId;
+
+		string productName;
+
+		string accountStatus;
+
+		string accountOwnership;
+
+		union { null, string } accountType = null;
+	}
+
+}

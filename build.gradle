@@ -1,0 +1,169 @@
+import com.github.davidmc24.gradle.plugin.avro.GenerateAvroProtocolTask
+import com.github.davidmc24.gradle.plugin.avro.GenerateAvroSchemaTask
+
+plugins {
+    id 'java'
+    id "com.avast.gradle.docker-compose" version "0.14.13"
+    id 'org.springframework.boot' version '2.7.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'com.github.kt3k.coveralls' version '2.12.0'
+    id 'application'
+    id 'jacoco'
+    id 'com.github.davidmc24.gradle.plugin.avro' version '1.1.0'
+    id "ch.kk7.spawn" version '1.0.20180924200750'
+}
+
+group 'com.ntnn'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://packages.confluent.io/maven")
+    }
+}
+
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.6'
+    implementation 'org.springframework.kafka:spring-kafka:2.9.0'
+    implementation "org.apache.avro:avro:1.10.1"
+
+    implementation "io.confluent:common-config:5.5.1"
+    implementation 'io.confluent:kafka-avro-serializer:5.5.1'
+    implementation 'io.confluent:kafka-streams-avro-serde:5.5.1'
+    implementation 'io.confluent:kafka-schema-registry-client:5.5.1'
+
+
+    testImplementation 'org.mockito:mockito-core:4.9.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.6'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+tasks.withType(Copy).all { duplicatesStrategy 'exclude' }
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs('src/main/java',"${buildDir}/generated-main-avro-java")
+        }
+        resources {
+            srcDir('src/main/resources')
+        }
+    }
+    test {
+        java {
+            srcDir('src/test/java')
+        }
+        resources {
+            srcDir('src/test/resources')
+        }
+    }
+}
+
+avro {
+    stringType = "CharSequence"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dockerCompose {
+    useComposeFiles = ["src/main/docker/compose/docker-compose.yml"]
+    dockerComposeStopTimeout = java.time.Duration.ofSeconds(120)
+}
+
+task startTestEnvironment() {
+    dependsOn += ["composeUp"]
+}
+
+task stopTestEnvironment {
+    dependsOn += ["composeDown"]
+}
+
+def generateProtocol = tasks.register("generateProtocol", GenerateAvroProtocolTask) {
+    source file("src/main/avro")
+    include("**/*.avdl")
+    outputDir = file("build/generated-avro-main-avpr")
+}
+
+tasks.register("generateSchema", GenerateAvroSchemaTask) {
+    dependsOn generateProtocol
+    source file("src/main/avro")
+    source file("build/generated-avro-main-avpr")
+    include("**/*.avpr")
+    outputDir = file("build/generated-main-avro-avsc")
+}
+
+generateSchema.dependsOn(compileJava)
+
+task startService(type: SpawnTask) {
+    dependsOn assemble
+    command "./gradlew bootRun"
+    waitFor "Started Application"
+}
+
+task stopService(type: KillTask) {
+    kills startService
+}
+
+//def nameFile = "avro-example"
+//def tomcatlog = new File(project.getBuildDir(), "tomcat.log")
+//task startApp() {
+//    if (tomcatlog.exists()) tomcatlog.delete()
+//    dependsOn assemble
+//    def file = new File("${buildDir}/spawn/${nameFile}.pid")
+//    if (file.exists()) println("Server already running")
+//    def command = createCommandForTomcat(project)
+//    println(command)
+//    createFile(tomcatlog)
+//    def process = process(command)
+//    println(process.pid())
+//    stampLockFile(file, process)
+//}
+//
+//task stopApp() {
+//    def file = new File("${buildDir}/spawn/${nameFile}.pid")
+//    if (!file.exists()) println("No found service running")
+//    if (file.exists()) {
+//        def pid = file.text
+//
+//    }
+//}
+//
+//def createCommandForTomcat(Project project) {
+//    List<String> commands = ['java', '-jar', '-Dendpoint.shutdown.enable=true']
+//    commands.add("jmvOptions=''")
+//    commands.add("timeout=30000")
+//    commands.add(project.buildDir.absolutePath + "/libs/kafka-springboot-avro-example-1.0-SNAPSHOT.jar")
+//    return commands.join(" ")
+//}
+//
+//def createFile(File tomcatlog) {
+//    tomcatlog.canRead()
+//    tomcatlog.canExecute()
+//    tomcatlog.canWrite()
+//    tomcatlog.createNewFile()
+//}
+//
+//Process process(String command) {
+//    ProcessBuilder builder = new ProcessBuilder()
+//    builder.command(command.split(' '))
+//    return builder.start()
+//}
+//
+//def stampLockFile(File pidFile, Process process) {
+//    if(pidFile.exists()) {
+//        pidFile.text = String.valueOf(process.pid())
+//    } else {
+//        pidFile.createNewFile()
+//        pidFile.text = String.valueOf(process.pid())
+//    }
+//}
