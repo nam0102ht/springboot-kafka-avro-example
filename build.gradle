@@ -1,5 +1,7 @@
 import com.github.davidmc24.gradle.plugin.avro.GenerateAvroProtocolTask
 import com.github.davidmc24.gradle.plugin.avro.GenerateAvroSchemaTask
+import ch.kk7.gradle.spawn.KillTask;
+import ch.kk7.gradle.spawn.SpawnTask;
 
 plugins {
     id 'java'
@@ -111,7 +113,7 @@ task startApp(type: SpawnTask) {
 }
 
 task stopApp(type: KillTask) {
-    kills startService
+    kills startApp
 }
 
 task componentTest(type: Test, dependsOn: ['testClasses']) {
