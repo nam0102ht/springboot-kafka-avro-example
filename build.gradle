@@ -108,10 +108,23 @@ tasks.register("generateSchema", GenerateAvroSchemaTask) {
     outputDir = file("build/generated-main-avro-avsc")
 }
 
-// This adds HARNESS_JAVA_AGENT to the testing command if it's
-// provided through the command line.
-// Local builds will still remain same as it only adds if the
-// parameter is provided.
+test {
+    useJUnitPlatform()
+    include 'unit/**'
+}
+
+task componentTest(type: Test, dependsOn: ['testClasses']) {
+    useJUnitPlatform()
+    include 'component/**'
+}
+
+
+task coverage() {
+    apply {
+        from("coverage.gradle")
+    }
+}
+
 tasks.withType(Test) {
     if(System.getProperty("HARNESS_JAVA_AGENT")) {
         jvmArgs += [System.getProperty("HARNESS_JAVA_AGENT")]
@@ -147,15 +160,17 @@ generateSchema.dependsOn(compileJava)
 //    kills startApp
 //}
 
-task componentTest(type: Test, dependsOn: ['testClasses']) {
-    useJUnitPlatform()
-    include 'component/**'
+jacocoTestReport {
+    dependsOn test
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ["**/resources/**/*","**/*Test*","**/blackbox/**/*","**/unit/**/*","**/component/**/*","**/generated/**/*","**/package-info*","**/dto/*","**/entity/*","**/api/**","**/config*","**/Application*", "**/converter*"])
+        }))
+    }
 }
 
-test() {
-    useJUnitPlatform()
-    include 'unit/**'
-}
+coverage.dependsOn(jacocoTestReport)
 
 //task blackboxTest(type: Test, dependsOn: ['testClasses']) {
 //    useJUnitPlatform()
