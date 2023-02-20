@@ -152,6 +152,11 @@ task componentTest(type: Test, dependsOn: ['testClasses']) {
     include 'component/**'
 }
 
+test() {
+    useJUnitPlatform()
+    include 'unit/**'
+}
+
 //task blackboxTest(type: Test, dependsOn: ['testClasses']) {
 //    useJUnitPlatform()
 //    include 'component/**'
